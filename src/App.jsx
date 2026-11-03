@@ -1,122 +1,59 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { Component, useCallback, useEffect, useRef, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { KeyboardControls } from '@react-three/drei'
+import Escenario from './components/Escenario'
+import Marcador from './components/Marcador'
+import { START, formatTime } from './game'
 import './App.css'
-
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+const controls = [
+  { name: 'forward', keys: ['ArrowUp', 'KeyW'] }, { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
+  { name: 'left', keys: ['ArrowLeft', 'KeyA'] }, { name: 'right', keys: ['ArrowRight', 'KeyD'] },
+]
+const initialSimulation = () => ({ position: { ...START }, time: 0, lastUpdate: 0 })
+class SceneBoundary extends Component {
+  state = { error: false }
+  static getDerivedStateFromError() { return { error: true } }
+  render() { return this.state.error ? <div className="webgl-error">No se pudo iniciar el 3D. Activa la aceleración gráfica del navegador y recarga la página.</div> : this.props.children }
 }
-
-export default App
+export default function App() {
+  const [status, setStatus] = useState('ready'), [deaths, setDeaths] = useState(0), [time, setTime] = useState(0), [progress, setProgress] = useState(0), [hit, setHit] = useState(false)
+  const simulation = useRef(initialSimulation()), touch = useRef({}), hitTimer = useRef()
+  const reset = useCallback(() => {
+    simulation.current = initialSimulation(); touch.current = {}; clearTimeout(hitTimer.current)
+    setDeaths(0); setTime(0); setProgress(0); setHit(false); setStatus('ready')
+  }, [])
+  const pause = useCallback(() => { touch.current = {}; setStatus(s => s === 'playing' ? 'paused' : s === 'paused' ? 'playing' : s) }, [])
+  useEffect(() => {
+    const keydown = e => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault()
+      if (e.repeat) return
+      if (e.code === 'KeyP' || e.code === 'Escape') pause()
+      if (e.code === 'KeyR') reset()
+    }
+    const blur = () => { touch.current = {}; setStatus(s => s === 'playing' ? 'paused' : s) }
+    window.addEventListener('keydown', keydown); window.addEventListener('blur', blur)
+    return () => { window.removeEventListener('keydown', keydown); window.removeEventListener('blur', blur); clearTimeout(hitTimer.current) }
+  }, [pause, reset])
+  const onDeath = () => { setDeaths(n => n + 1); setProgress(0); setHit(true); clearTimeout(hitTimer.current); hitTimer.current = setTimeout(() => setHit(false), 1400) }
+  const onWin = elapsed => { setStatus('won'); setTime(elapsed); setProgress(100); touch.current = {} }
+  const onUpdate = (elapsed, distance) => { setTime(elapsed); setProgress(distance) }
+  return <main className={`game ${hit ? 'is-hit' : ''}`}>
+    <KeyboardControls map={controls}><div className="scene" aria-label="Pista 3D de Misión Cóndor"><SceneBoundary>
+      <Canvas shadows orthographic camera={{ position: [14, 19, 25], zoom: 26, near: 0.1, far: 150 }} dpr={[1, 1.75]} onCreated={({ camera }) => camera.lookAt(0, 0, 0)} fallback={<div className="webgl-error">Tu navegador necesita soporte WebGL para mostrar el juego.</div>}>
+        <Escenario simulation={simulation} status={status} onDeath={onDeath} onWin={onWin} onUpdate={onUpdate} touch={touch} />
+      </Canvas>
+    </SceneBoundary></div></KeyboardControls>
+    <Marcador deaths={deaths} time={time} progress={progress} status={status} onPause={pause} onReset={reset} />
+    <aside className="mission"><span className="eyebrow">01 / PASO ANDINO</span><h1>El camino<br />a la cumbre.</h1><p>Lleva a tu llama desde <em>A</em> hasta <em>B</em>.<br />Observa las rocas. Encuentra tu momento.</p><div className="legend"><span><i className="mint" /> Inicio</span><span><i className="gold" /> Meta</span><span><i className="coral" /> Peligro</span></div></aside>
+    <div className="status-note" aria-live="polite">{hit ? '¡Choque! De vuelta al punto A. Inténtalo de nuevo.' : status === 'playing' ? 'Cruza las cuatro líneas de rocas y alcanza el arco dorado.' : ''}</div>
+    {status !== 'playing' && <div className={`overlay ${status === 'ready' ? 'intro-overlay' : ''}`}><section className="dialog" role="dialog" aria-labelledby="dialog-title">
+      <span className="eyebrow">{status === 'won' ? 'EXPEDICIÓN COMPLETADA' : status === 'paused' ? 'TOMA UN RESPIRO' : 'TU PRÓXIMA AVENTURA'}</span>
+      <h2 id="dialog-title">{status === 'won' ? '¡Llegaste a la meta!' : status === 'paused' ? 'En pausa.' : 'Cada paso cuenta.'}</h2>
+      <p>{status === 'won' ? `Conquistaste el paso en ${formatTime(time)} con ${deaths} ${deaths === 1 ? 'muerte' : 'muertes'}.` : status === 'paused' ? 'La montaña te espera. Continúa cuando estés listo.' : 'Cuatro obstáculos en movimiento. Una llama valiente. Llega al punto B sin tocar las rocas.'}</p>
+      <button className="primary" onClick={() => { if (status === 'won') reset(); else setStatus('playing') }}>{status === 'won' ? 'Volver a intentar' : status === 'paused' ? 'Continuar expedición' : 'Comenzar expedición'} <span>↗</span></button>
+      {status === 'ready' && <small>WASD o flechas para moverte · P para pausar</small>}
+    </section></div>}
+    <footer className="footer"><div className="keyboard"><kbd>W</kbd><span className="key-row"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div><p><strong>Muévete con WASD o las flechas</strong><span>P · Pausa &nbsp; / &nbsp; R · Reiniciar</span></p><span className="footer-right">LOS ANDES TE ESPERAN <span>↗</span></span></footer>
+    <nav className="touch-controls" aria-label="Controles táctiles">{[['left', '←', 'izquierda'], ['forward', '↑', 'adelante'], ['backward', '↓', 'atrás'], ['right', '→', 'derecha']].map(([key, label, name]) => <button key={key} aria-label={`Mover ${name}`} disabled={status !== 'playing'} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); touch.current[key] = true }} onPointerUp={() => { touch.current[key] = false }} onPointerCancel={() => { touch.current[key] = false }} onLostPointerCapture={() => { touch.current[key] = false }}>{label}</button>)}</nav>
+  </main>
+}
