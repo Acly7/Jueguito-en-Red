@@ -4,3 +4,43 @@
 @media(max-width:700px){.game{min-height:700px}.hud{height:74px;padding:0 15px;gap:10px}.brand{font-size:12px;gap:7px}.brand-symbol{font-size:28px}.brand small{font-size:7px;letter-spacing:1px}.stats{gap:13px}.stats strong{font-size:21px}.stats span{font-size:7px;letter-spacing:1px}.actions button{padding:8px;font-size:10px}.actions kbd{display:none}.mission{top:94px;left:20px}.mission h1{font-size:26px;letter-spacing:-1px;margin:10px 0}.mission h1 br{display:none}.mission p{font-size:10px;margin:0}.legend{margin-top:12px}.scene{inset:165px -100px 90px -100px}.intro-overlay{inset:74px 0 85px;justify-content:center;padding:0 0 20px;background:#07121a33}.intro-overlay .dialog{width:320px}.footer{height:80px;padding:0 18px}.footer-right,.keyboard{display:none}.footer p{font-size:9px}.status-note{bottom:175px;right:20px;left:20px;max-width:none;font-size:10px}.overlay:not(.intro-overlay){inset:74px 0 80px}.dialog{padding:26px}.touch-controls{display:flex;position:absolute;bottom:95px;right:18px;gap:6px}.touch-controls button{background:#183340e6;border:1px solid #67818b88;width:42px;height:42px;border-radius:9px;font-size:20px;touch-action:none}.touch-controls button:active{background:#397162}}
 @media(max-width:700px){.scene{inset:230px 0 155px}.mission{z-index:1}.intro-overlay{background:#07121a60}.touch-controls{z-index:15}}
 @media(max-height:740px) and (min-width:701px){.mission{top:108px}.mission h1{font-size:34px;margin:12px 0}.mission p{font-size:11px}.legend{margin-top:12px}.intro-overlay .dialog{padding:18px}.intro-overlay .dialog p{font-size:11px;margin-bottom:14px}.intro-overlay .dialog h2{margin:9px 0;font-size:22px}.intro-overlay{padding-bottom:15px}}
+
+/* Personalización visual: edición violeta y turquesa */
+.game{background:#111b31}
+.hud{background:#141b32ed;border-bottom:1px solid #ad91f333;box-shadow:0 5px 26px #090c2040}
+.brand{font-family:'Trebuchet MS','Segoe UI',sans-serif;letter-spacing:1.45px}
+.brand-symbol{color:#b9a0ff;text-shadow:0 0 20px #9e80ff77}
+.brand small{color:#aab4d2}
+.stats span,.progress-stat b{color:#b7c4e1}
+.stats>div:first-child strong{color:#ffa98d}
+.stats strong{font-weight:700}
+progress{height:7px;border-radius:99px}
+progress::-webkit-progress-bar{background:#384260}
+progress::-webkit-progress-value{background:linear-gradient(90deg,#a58aff,#44e0c5)}
+progress::-moz-progress-bar{background:#a58aff}
+.actions button{background:#242c47;border:1px solid #b8a5ff55;border-radius:12px;transition:background .2s,transform .2s}
+.actions button:not(:disabled):hover{background:#39365c;transform:translateY(-2px)}
+.mission{max-width:335px}
+.eyebrow{color:#65e9d3;font-weight:800}
+.mission h1{font-family:'Trebuchet MS','Segoe UI',sans-serif;font-weight:700;letter-spacing:-1.8px;text-shadow:0 4px 22px #070c2080}
+.mission p{color:#c2cbe0}
+.mission em{color:#a7ffe9;font-weight:700}
+.legend{color:#c3cce0}
+.mint{background:#65e9d3}.gold{background:#f9d687}.coral{background:#ff967b}
+.footer{background:#141b32ec;border-top:1px solid #aa91f32b}
+.footer-right span{color:#b9a0ff}
+.footer strong{color:#e2e6fa}
+.keyboard kbd{border-color:#ab9bde80;border-radius:5px;color:#d7d6f5;background:#262d49}
+.dialog{background:linear-gradient(155deg,#222846f5,#17283af5);border:1px solid #b9a0ff66;border-radius:23px;box-shadow:0 24px 65px #070c2377,0 0 0 1px #ffffff08}
+.dialog h2{font-family:'Trebuchet MS','Segoe UI',sans-serif;font-weight:700;letter-spacing:-.7px}
+.dialog p{color:#c2cce1}
+.dialog small{color:#b4c1db}
+.primary{background:linear-gradient(100deg,#a98bff,#80b8f9);color:#171c35;border-radius:14px;font-size:13px;box-shadow:0 8px 24px #9175f244;transition:transform .2s,filter .2s,box-shadow .2s}
+.primary:hover{background:linear-gradient(100deg,#bda7ff,#93d6ff);transform:translateY(-2px);box-shadow:0 12px 30px #9175f266}
+.primary:active{transform:translateY(0)}
+.primary span{font-size:22px}
+.status-note{color:#d2d9f0}
+button:focus-visible{outline-color:#b9a0ff}
+.touch-controls button{background:#272b4be6;border-color:#ad9bf288}
+.touch-controls button:active{background:#514a85}
+@media(max-width:700px){.mission h1{letter-spacing:-.7px}.dialog{border-radius:18px}}
