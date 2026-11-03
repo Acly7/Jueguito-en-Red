@@ -1,8 +1,8 @@
-# Misión Cóndor — Los reinos del laberinto
+# Misión Llamita — Los reinos del laberinto
 
-Aventura 3D con React, Vite, @react-three/fiber, @react-three/drei y Three. Conserva la llama de figuras geométricas y añade cuatro salas conectadas, inspiradas en los muros de colores y los laberintos de Adventure. Los mapas, modelos y gráficos son propios y se generan localmente.
+Aventura con React, Three, React Three Fiber y Drei. La llamita original recorre **siete zonas**, resuelve **seis puzles** y esquiva **39 guardianes**. La cámara usa proyección perspectiva, seguimiento cercano y vista general opcional. La carpeta existente y el remoto de Git se mantienen para conservar las rutas del proyecto.
 
-## Ejecutar y verificar
+## Ejecutar
 
 ```sh
 npm install
@@ -12,59 +12,55 @@ npm run lint
 npm run build
 ```
 
-Abre la URL indicada por Vite. Se verificó con Node 24. No hay modelos, fuentes ni texturas remotas que descargar al jugar.
+Se comprobó con Node 24. Los modelos y gráficos son locales.
 
-## Objetivo y dificultad
+## Recorrido
 
-1. Empiezas en A, dentro del **Santuario del Cóndor**, la zona verde segura. Busca el portal de Zafiro a la derecha.
-2. Explora el **Laberinto de Zafiro** (azul), consigue su llave y abre la puerta a Ámbar.
-3. Cruza la **Fortaleza de Ámbar** (dorada), recupera su llave y pasa a Violeta.
-4. Encuentra la tercera llave en la **Cripta Violeta** y usa su portal de regreso al santuario.
-5. Con las tres llaves, entra en el altar B del santuario para ganar.
+| Zona | Guardianes | Puzle |
+| --- | ---: | --- |
+| Santuario de la Llamita | 0 | Inicio A y altar final B |
+| Laberinto de Zafiro | 4 | Secuencia de runas |
+| Fortaleza de Ámbar | 5 | Secuencia y pinchos temporizados |
+| Cripta Violeta | 6 | Secuencia y pinchos temporizados |
+| Catacumbas de Jade | 7 | Secuencia contrarreloj |
+| Bastión Carmesí | 8 | Secuencia contrarreloj |
+| Ciudadela de Hielo | 9 | Secuencia contrarreloj |
 
-Cada laberinto tiene un trazado diferente, bifurcaciones, callejones, pequeños refugios y tres guardianes móviles. Los guardianes de los últimos reinos son más rápidos. En Ámbar y Violeta también hay pinchos temporizados: gris significa seguro, ámbar avisa y rojo hace daño. Espera a que bajen antes de cruzar. Los pasillos permiten esquivar a los guardianes pegándote a un lado.
+En cada reino, lee la pista del sello, localiza los pedestales SOL, LUNA y ESTRELLA y actívalos en ese orden acercándote y pulsando E. Un error reinicia la secuencia. La pista cambia entre reinos. En los tres últimos el reloj comienza al activar la primera runa: el plazo se calcula a partir de la distancia real de recorrido y añade margen para esquivar. Si expira, debes comenzar de nuevo.
 
-Un choque suma una muerte y devuelve a A en el santuario. **Conservas las llaves**, pero debes volver a recorrer los pasillos. Las puertas anteriores permiten regresar. El cronómetro mide tiempo de simulación activa; se detiene durante la pausa o al ganar. Reiniciar elimina todo el progreso.
+Resolver el puzle abre la jaula de la llave. Recógela y entra en el portal del siguiente reino. Tras obtener las seis, vuelve al altar B del santuario. No basta con llegar a la última sala.
 
-## Controles
+Al morir vuelves a A, conservando las llaves y los puzles ya resueltos; las secuencias incompletas se reinician. El contador suma una muerte. R borra toda la partida. No hay persistencia después de recargar el navegador.
 
-- WASD o flechas: moverse. Las diagonales no aumentan la velocidad.
-- P o Escape: pausar/continuar; salir de la ventana también pausa.
-- R o botón circular: nueva partida, borra llaves, tiempo y muertes.
-- En pantallas pequeñas hay botones táctiles.
-- Las llaves se recogen al acercarse y los portales se usan al entrar en su círculo.
-- El aro turquesa identifica a la llama; una pulsación suave indica protección al reaparecer o cambiar de sala.
+## Controles y cámara
 
-## Código y defensa
+- WASD o flechas: movimiento en los ejes del mapa; diagonales normalizadas.
+- E: interactuar con un pedestal cercano. Mantenerla pulsada no repite acciones.
+- V: recorrer las cuatro cámaras. El selector permite elegir perspectiva con seguimiento, perspectiva del mapa completo, cenital del mapa completo y cenital con seguimiento. Las vistas cenitales miran exactamente hacia abajo y mantienen el norte arriba.
+- P/Escape: pausa. Salir de la ventana también pausa.
+- R: nueva partida.
+- Pantalla pequeña: botones táctiles, incluido E.
 
-| Archivo | Responsabilidad |
-| --- | --- |
-| src/App.jsx | Canvas, controles Drei, estado de interfaz, inventario, salas visitadas, pausa y victoria |
-| src/labyrinth.js | Cuatro mapas deterministas, búsqueda de rutas, movimiento, colisiones, llaves, puertas y reglas de simulación |
-| src/components/Jugador.jsx | Llama original, useKeyboardControls y actualización por cuadro con useFrame |
-| src/components/Obstaculo.jsx | Guardianes reutilizables que patrullan rutas de suelo sin atravesar paredes |
-| src/components/Laberinto.jsx | Suelo, muros, cámara 3D adaptable, puertas, llaves, altar y trampas animadas |
-| src/components/Marcador.jsx | Contador de muertes, tiempo, progreso de llaves y acciones |
-| tests/game.test.js | Conectividad, movimiento, guardianes, puertas, inventario, trampas, victoria y recorrido integral |
+El minimapa muestra paredes, tu posición, runas, llave y portales. Las runas activadas usan el mismo celeste que en la escena; vuelven al color pendiente si falla o caduca la secuencia. Las puertas cerradas y la llave encerrada se ven grises; se actualizan al desbloquearse y la llave desaparece al recogerla. El aro turquesa identifica a la llama. Los muros tienen volumen y sombras; la cámara cercana sigue a la protagonista suavemente y se recoloca al cambiar de sala. El aumento de tamaño de los objetos cercanos y la reducción de los lejanos provienen de la cámara PerspectiveCamera, sin proyección ortográfica.
 
-Fiber dibuja la escena con Canvas y permite actualizarla con useFrame. Drei interpreta el teclado con KeyboardControls y useKeyboardControls. Three proporciona las geometrías, luces, materiales y texturas locales de los letreros.
+Los guardianes patrullan caminos válidos del laberinto, con velocidades crecientes. Los pinchos son seguros en gris, avisan en ámbar y dañan en rojo. Busca cámaras de refugio y usa los laterales de los pasillos para esquivar.
 
-La simulación usa subpasos de hasta 1/120 s y limita el tiempo acumulado en un cuadro largo. La posición se comprueba contra los muros en ambos ejes, permitiendo deslizarse por ellos sin atravesarlos. Las colisiones con guardianes usan distancia entre radios; las trampas solo dañan durante la fase activa. La misma función stepSimulation se usa en el juego y en las pruebas.
+## Código
 
-Los laberintos usan semillas fijas para reproducir los trazados. Se generan caminos conectados y después se añaden pequeñas cámaras y algunos bucles. La búsqueda BFS comprueba rutas y define patrullas. Las llaves se ubican lejos de la entrada por distancia de recorrido, no solo por distancia en línea recta.
+- `src/App.jsx`: Canvas, KeyboardControls de Drei, interfaz, inventario, pista de puzle y modos de cámara.
+- `src/labyrinth.js`: mapas deterministas, BFS, reglas de movimiento, colisiones, inventario, portales, puzles y temporizadores.
+- `src/components/Jugador.jsx`: modelo original de la llama y simulación con useFrame/useKeyboardControls.
+- `src/components/Laberinto.jsx`: cámara perspectiva, muros, portales, jaulas, runas y trampas.
+- `src/components/Obstaculo.jsx`: guardianes reutilizables y patrullas.
+- `src/components/MiniMapa.jsx`: orientación en SVG con posición actual.
+- `src/components/Marcador.jsx`: tiempo, muertes y progreso.
 
-La prueba integral recorre entradas, llaves, puertas y altar usando movimiento real de la simulación; desactiva el daño para verificar únicamente que la geometría y la progresión no bloquean la partida. Las muertes y trampas se verifican por separado. La prueba en navegador verifica además renderizado 3D, teclado, transición de sala, pausa y presentación móvil.
+La simulación usa pasos de hasta 1/120 s para comprobar paredes y enemigos. El tiempo y los peligros se congelan en pausa y al ganar. Las pulsaciones de interacción tienen detección de flanco para no activar múltiples runas al mantener E.
 
-## Trabajo de equipo y entrega
+## Verificación
 
-La guía original exige ramas feature/jugador, feature/obstaculos y feature/marcador, commits reales por integrante y un Pull Request revisado por otra persona. Cada integrante debe trabajar y explicar su contribución; no se deben simular autores ni revisiones. Esta actualización local no crea una entrega ni publica cambios en GitHub.
+Las pruebas cubren conectividad de las siete zonas, movimiento sin atravesar paredes, patrullas, puertas, llaves, muertes, trampas, victoria, orden de runas, teclas mantenidas y expiración de puzles. La prueba integral camina por todos los objetivos y resuelve cada puzle con su reloj real de simulación. Solo en esa prueba se desactiva el daño para aislar la conectividad y las reglas de progresión; las colisiones se verifican por separado. No representa una evaluación del equilibrio de dificultad por jugadores humanos.
 
-Guion sugerido para el video de 2–3 minutos:
+## Defensa y trabajo del equipo
 
-1. Presentar integrantes, objetivo y controles.
-2. Mostrar a la llama, un laberinto, un choque y el aumento del contador, una llave y una puerta. Mostrar también la victoria tras regresar con las tres llaves.
-3. Enseñar Canvas/useFrame de Fiber y KeyboardControls/useKeyboardControls de Drei.
-4. Explicar brevemente muros, patrullas y trampas temporizadas.
-5. Mostrar ramas, commits y PR reales. Cada integrante explica su parte.
-
-La entrega académica sigue requiriendo el enlace del repositorio y el del video.
+Mostrar el juego, un choque y aumento de muertes, la activación de runas, una puerta y la victoria. Explicar Canvas/useFrame (Fiber), KeyboardControls/useKeyboardControls (Drei), cámara perspectiva y colisiones. Mostrar las ramas, commits y PR reales de cada integrante. La guía académica requiere un video de 2–3 minutos y los enlaces al repositorio y al video. Esta actualización local no publica cambios ni crea participaciones del equipo.

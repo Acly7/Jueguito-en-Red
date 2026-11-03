@@ -55,25 +55,31 @@ function makeHub() {
   return grid
 }
 const definitions = [
-  { name: 'Santuario del Cóndor', short: 'Santuario', color: '#80c878', accent: '#bceba5', description: 'El refugio. Reúne las tres llaves y vuelve al altar.', grid: makeHub() },
+  { name: 'Santuario de la Llamita', short: 'Santuario', color: '#80c878', accent: '#bceba5', description: 'El refugio. Reúne las seis llaves y vuelve al altar.', grid: makeHub() },
   { name: 'Laberinto de Zafiro', short: 'Zafiro', color: '#5554cf', accent: '#aaa8ff', description: 'Pasillos azules, desvíos y guardianes. Busca la llave azul.', grid: makeMaze(2600) },
   { name: 'Fortaleza de Ámbar', short: 'Ámbar', color: '#c18e31', accent: '#ffda80', description: 'Las trampas despiertan. Observa el suelo antes de avanzar.', grid: makeMaze(1980) },
-  { name: 'Cripta Violeta', short: 'Violeta', color: '#9749bb', accent: '#e8a5ff', description: 'Guardianes más rápidos. La última llave está aquí.', grid: makeMaze(1979) },
+  { name: 'Cripta Violeta', short: 'Violeta', color: '#9749bb', accent: '#e8a5ff', description: 'Guardianes más rápidos. Resuelve las runas para liberar su llave.', grid: makeMaze(1979) },
+  { name: 'Catacumbas de Jade', short: 'Jade', color: '#287969', accent: '#80ebcb', description: 'El reloj de las runas no espera. Encuentra el orden y corre.', grid: makeMaze(6401) },
+  { name: 'Bastión Carmesí', short: 'Carmesí', color: '#9d334b', accent: '#ff8eaa', description: 'Guardianes veloces y runas contrarreloj. Planea tu ruta.', grid: makeMaze(9307) },
+  { name: 'Ciudadela de Hielo', short: 'Hielo', color: '#377aa3', accent: '#9ce4ff', description: 'El último desafío: seis llaves para volver a casa.', grid: makeMaze(12011) },
 ]
+export const KEY_COUNT = definitions.length - 1
+export const RUNES = ['SOL', 'LUNA', 'ESTRELLA']
 export const ROOMS = definitions.map((room, index) => {
   const start = index === 0 ? [9, 12] : [1, 13]
   const portals = index === 0
     ? [{ cell: [17, 7], to: 1, arrival: [2, 12], label: 'ZAFIRO', color: '#aaa8ff' }]
     : [{ cell: [1, 13], to: index - 1, arrival: index === 1 ? [16, 7] : [16, 2], label: 'VOLVER', color: '#a0c7bd' },
-      { cell: [17, 1], to: index === 3 ? 0 : index + 1, arrival: index === 3 ? [2, 7] : [2, 12], requires: index, label: index === 3 ? 'SANTUARIO' : definitions[index + 1].short.toUpperCase(), color: index === 3 ? '#bceba5' : definitions[index + 1].accent }]
+      { cell: [17, 1], to: index === KEY_COUNT ? 0 : index + 1, arrival: index === KEY_COUNT ? [2, 7] : [2, 12], requires: index, label: index === KEY_COUNT ? 'SANTUARIO' : definitions[index + 1].short.toUpperCase(), color: index === KEY_COUNT ? '#bceba5' : definitions[index + 1].accent }]
   const floors = room.grid.flatMap((row, z) => row.flatMap((v, x) => v === 0 ? [[x, z]] : []))
   const candidates = floors.filter(c => portals.every(p => Math.hypot(c[0] - p.cell[0], c[1] - p.cell[1]) > 3))
   const keyCell = index === 0 ? null : candidates.reduce((best, c) => pathBetween(room.grid, start, c).length > pathBetween(room.grid, start, best).length ? c : best, candidates[0])
   const safe = cell => portals.every(p => Math.hypot(cell[0] - p.cell[0], cell[1] - p.cell[1]) > 2.5) && Math.hypot(cell[0] - start[0], cell[1] - start[1]) > 3 && (!keyCell || id(cell) !== id(keyCell))
   const patrolCells = floors.filter(safe)
-  const enemies = index === 0 ? [] : [0, 1, 2].map((n) => {
-    const a = patrolCells[Math.floor(patrolCells.length * (n + 0.4) / 3.5)]
-    const b = patrolCells[Math.floor(patrolCells.length * (n + 1.1) / 3.5) % patrolCells.length]
+  const enemyCount = index + 3
+  const enemies = index === 0 ? [] : Array.from({ length: enemyCount }, (_, n) => {
+    const a = patrolCells[Math.floor(patrolCells.length * (n + 0.4) / (enemyCount + 0.5))]
+    const b = patrolCells[Math.floor(patrolCells.length * (n + 1.1) / (enemyCount + 0.5)) % patrolCells.length]
     const full = pathBetween(room.grid, a, b)
     // Each patrol stays on a contiguous section of floor, away from door landings.
     const segment = []
@@ -82,10 +88,14 @@ export const ROOMS = definitions.map((room, index) => {
       const neighbor = directions.map(([dx, dz]) => [a[0] + dx, a[1] + dz]).find(c => room.grid[c[1]]?.[c[0]] === 0 && safe(c))
       if (neighbor) segment.push(...(segment.length ? [] : [a]), neighbor)
     }
-    return { id: n, route: segment.length >= 2 ? segment : full.slice(0, 2), speed: 2.5 + index * 0.65 + n * 0.2, phase: n * 3.7, radius: 0.52 }
+    return { id: n, route: segment.length >= 2 ? segment : full.slice(0, 2), speed: 3 + index * 0.4 + n * 0.12, phase: n * 3.7, radius: 0.52 }
   })
-  const traps = index < 2 ? [] : patrolCells.filter(c => safe(c)).filter((_, i) => i % (index === 2 ? 25 : 17) === 8).map((cell, i) => ({ cell, phase: i * 0.83 }))
-  return { ...room, id: index, width: WIDTH, height: HEIGHT, start, portals, keyCell, enemies, traps }
+  const traps = index < 2 ? [] : patrolCells.filter(c => safe(c)).filter((_, i) => i % Math.max(10, 29 - index * 3) === 8).map((cell, i) => ({ cell, phase: i * 0.83 }))
+  const switchCells = index === 0 ? [] : [0.18, 0.48, 0.78].map(f => candidates.filter(c => id(c) !== id(keyCell))[Math.floor((candidates.length - 1) * f)])
+  const order = index % 2 ? [2, 0, 1] : [1, 2, 0]
+  const routeLength = switchCells.length ? order.slice(1).reduce((sum, n, i) => sum + pathBetween(room.grid, switchCells[order[i]], switchCells[n]).length * TILE, 0) : 0
+  const puzzle = index === 0 ? null : { cells: switchCells, order, timed: index >= 4, limit: Math.ceil(routeLength / SPEED * 1.8 + 15) }
+  return { ...room, puzzle, id: index, width: WIDTH, height: HEIGHT, start, portals, keyCell, enemies, traps }
 })
 
 export function isWalkable(room, p) {
@@ -127,27 +137,31 @@ export function dangerAt(room, p, time) {
   return room.enemies.some(e => near(p, enemyPosition(e, time), RADIUS + e.radius)) || room.traps.some(t => trapState(t, time) === 'active' && near(p, world(t.cell), 0.9))
 }
 export function createSimulation() {
-  return { room: 0, position: world(ROOMS[0].start), time: 0, deaths: 0, keys: [], visited: [0], immunity: 0, portalCooldown: 0, messageUntil: 0, message: 'Encuentra el portal azul para entrar al laberinto.', won: false }
+  return { room: 0, position: world(ROOMS[0].start), time: 0, deaths: 0, keys: [], visited: [0], immunity: 0, portalCooldown: 0, messageUntil: 0, puzzles: {}, interactHeld: false, message: 'Encuentra el portal azul para entrar al laberinto.', won: false }
 }
 export function snapshot(sim) {
-  return { room: sim.room, time: sim.time, deaths: sim.deaths, keys: [...sim.keys], visited: [...sim.visited], won: sim.won, message: sim.message, cell: cellAt(sim.position) }
+  return { puzzle: { ...(sim.puzzles[sim.room] || { progress: 0, solved: false, deadline: 0 }) }, room: sim.room, time: sim.time, deaths: sim.deaths, keys: [...sim.keys], visited: [...sim.visited], won: sim.won, message: sim.message, cell: cellAt(sim.position) }
 }
 export function stepSimulation(sim, input, delta) {
   if (sim.won) return
+  const pressed = Boolean(input.interact) && !sim.interactHeld
+  sim.interactHeld = Boolean(input.interact)
+  updatePuzzle(sim, pressed)
   let remaining = Math.min(delta, 0.1)
   while (remaining > 0) {
     const dt = Math.min(remaining, 1 / 120); remaining -= dt; sim.time += dt
     const room = ROOMS[sim.room]
     sim.position = movePlayer(room, sim.position, input, dt)
     if (sim.time >= sim.immunity && dangerAt(room, sim.position, sim.time)) {
+      for (const [key, puzzle] of Object.entries(sim.puzzles)) if (!puzzle.solved) delete sim.puzzles[key]
       sim.deaths++; sim.room = 0; sim.position = world(ROOMS[0].start); sim.immunity = sim.time + 1.5; sim.portalCooldown = sim.time + 0.8
       sim.message = '¡Te alcanzaron! Vuelves al santuario. Conservas tus llaves.'; sim.messageUntil = sim.time + 5
       return
     }
-    if (room.keyCell && !sim.keys.includes(room.id) && near(sim.position, world(room.keyCell), 0.9)) {
+    if (room.keyCell && sim.puzzles[room.id]?.solved && !sim.keys.includes(room.id) && near(sim.position, world(room.keyCell), 0.9)) {
       sim.keys.push(room.id); sim.message = `Llave de ${room.short} recuperada. La siguiente puerta está abierta.`; sim.messageUntil = sim.time + 5
     }
-    if (sim.room === 0 && sim.keys.length === 3 && near(sim.position, world([9, 5]), 1.1)) {
+    if (sim.room === 0 && sim.keys.length === KEY_COUNT && near(sim.position, world([9, 5]), 1.1)) {
       sim.won = true; sim.message = '¡El santuario vuelve a brillar!'; return
     }
     if (sim.time >= sim.portalCooldown) for (const portal of room.portals) {
@@ -160,6 +174,32 @@ export function stepSimulation(sim, input, delta) {
       sim.message = ROOMS[portal.to].description; sim.messageUntil = sim.time + 4
       return
     }
-    if (sim.time > sim.messageUntil) sim.message = sim.keys.length === 3 ? 'Regresa al altar dorado del santuario para ganar.' : room.description
+    if (sim.time > sim.messageUntil) sim.message = sim.keys.length === KEY_COUNT ? 'Regresa al altar dorado del santuario para ganar.' : room.description
   }
+}
+
+// Interacción por pulsación: mantener E no activa varias runas ni repite errores.
+export function updatePuzzle(sim, pressed) {
+  const room = ROOMS[sim.room]
+  if (!room.puzzle) return
+  const state = sim.puzzles[sim.room] ||= { progress: 0, solved: false, deadline: 0 }
+  if (state.solved) return
+  if (state.deadline && sim.time >= state.deadline) {
+    state.progress = 0; state.deadline = 0
+    sim.message = 'Se agotó el tiempo. Vuelve a empezar la secuencia.'; sim.messageUntil = sim.time + 4
+  }
+  if (!pressed) return
+  const index = room.puzzle.cells.findIndex(c => near(sim.position, world(c), 1.25))
+  if (index < 0) { sim.message = 'Acércate a un pedestal de runas y pulsa E.'; sim.messageUntil = sim.time + 2; return }
+  if (index !== room.puzzle.order[state.progress]) {
+    state.progress = 0; state.deadline = 0
+    sim.message = 'Orden incorrecto. Las runas se apagan; revisa la pista.'; sim.messageUntil = sim.time + 4
+    return
+  }
+  if (state.progress === 0 && room.puzzle.timed) state.deadline = sim.time + room.puzzle.limit
+  state.progress++
+  state.solved = state.progress === room.puzzle.order.length
+  if (state.solved) state.deadline = 0
+  sim.message = state.solved ? '¡Puzle resuelto! La jaula de la llave se ha abierto.' : `Runa correcta (${state.progress}/3). Busca la siguiente.`
+  sim.messageUntil = sim.time + 4
 }

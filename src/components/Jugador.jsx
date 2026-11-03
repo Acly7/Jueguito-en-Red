@@ -10,7 +10,7 @@ export default function Jugador({ simulation, status, onUpdate, touch }) {
   useFrame((_, delta) => {
     const sim = simulation.current
     const keys = getKeys()
-    const input = Object.fromEntries(['forward', 'backward', 'left', 'right'].map(key => [key, Boolean(keys[key] || touch.current[key])]))
+    const input = Object.fromEntries(['forward', 'backward', 'left', 'right', 'interact'].map(key => [key, Boolean(keys[key] || touch.current[key])]))
     if (status === 'playing') {
       const before = `${sim.room}/${sim.deaths}/${sim.keys.length}/${sim.won}`
       stepSimulation(sim, input, delta)
