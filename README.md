@@ -1,86 +1,70 @@
-# Misión Cóndor: de A a B
+# Misión Cóndor — Los reinos del laberinto
 
-Juego 3D con React, Vite, @react-three/fiber, @react-three/drei y three. Una llama debe cruzar el paso andino esquivando cuatro rocas móviles.
+Aventura 3D con React, Vite, @react-three/fiber, @react-three/drei y Three. Conserva la llama de figuras geométricas y añade cuatro salas conectadas, inspiradas en los muros de colores y los laberintos de Adventure. Los mapas, modelos y gráficos son propios y se generan localmente.
 
-## Ejecutar
-
-Requiere una versión de Node compatible con Vite 8 (se verificó con Node 24).
+## Ejecutar y verificar
 
 ```sh
 npm install
 npm run dev
-```
-
-Abre la dirección que indique Vite (normalmente http://localhost:5173).
-
-```sh
-npm run build
-npm run lint
 npm test
+npm run lint
+npm run build
 ```
 
-## Cómo jugar
+Abre la URL indicada por Vite. Se verificó con Node 24. No hay modelos, fuentes ni texturas remotas que descargar al jugar.
 
-- Pulsa **Comenzar expedición**.
-- WASD o flechas: mover la llama sobre la pista. En pantallas pequeñas también hay botones táctiles.
-- El círculo verde A es el inicio; el arco amarillo B es la meta.
-- Las cuatro rocas se desplazan de lado a lado con diferentes velocidades.
-- Un choque suma una muerte y devuelve al punto A. El cronómetro continúa.
-- Entra en la zona B para ganar. Llegar al fondo por un borde no basta.
-- P o Escape: pausar/continuar. Al salir de la ventana también se pausa.
-- R o el botón circular: reinicia muertes, tiempo, posición y obstáculos.
+## Objetivo y dificultad
 
-## Organización del código
+1. Empiezas en A, dentro del **Santuario del Cóndor**, la zona verde segura. Busca el portal de Zafiro a la derecha.
+2. Explora el **Laberinto de Zafiro** (azul), consigue su llave y abre la puerta a Ámbar.
+3. Cruza la **Fortaleza de Ámbar** (dorada), recupera su llave y pasa a Violeta.
+4. Encuentra la tercera llave en la **Cripta Violeta** y usa su portal de regreso al santuario.
+5. Con las tres llaves, entra en el altar B del santuario para ganar.
+
+Cada laberinto tiene un trazado diferente, bifurcaciones, callejones, pequeños refugios y tres guardianes móviles. Los guardianes de los últimos reinos son más rápidos. En Ámbar y Violeta también hay pinchos temporizados: gris significa seguro, ámbar avisa y rojo hace daño. Espera a que bajen antes de cruzar. Los pasillos permiten esquivar a los guardianes pegándote a un lado.
+
+Un choque suma una muerte y devuelve a A en el santuario. **Conservas las llaves**, pero debes volver a recorrer los pasillos. Las puertas anteriores permiten regresar. El cronómetro mide tiempo de simulación activa; se detiene durante la pausa o al ganar. Reiniciar elimina todo el progreso.
+
+## Controles
+
+- WASD o flechas: moverse. Las diagonales no aumentan la velocidad.
+- P o Escape: pausar/continuar; salir de la ventana también pausa.
+- R o botón circular: nueva partida, borra llaves, tiempo y muertes.
+- En pantallas pequeñas hay botones táctiles.
+- Las llaves se recogen al acercarse y los portales se usan al entrar en su círculo.
+- El aro turquesa identifica a la llama; una pulsación suave indica protección al reaparecer o cambiar de sala.
+
+## Código y defensa
 
 | Archivo | Responsabilidad |
 | --- | --- |
-| src/App.jsx | Canvas de Fiber, KeyboardControls de Drei, estado general, pausa, victoria y reinicio |
-| src/components/Jugador.jsx | Llama geométrica, lectura de teclado con useKeyboardControls y simulación con useFrame |
-| src/components/Obstaculo.jsx | Roca reutilizable, movimiento sinusoidal y rotación |
-| src/components/Marcador.jsx | Contador de muertes, tiempo, progreso y acciones |
-| src/components/Escenario.jsx | Pista, luces, cámara adaptable, montañas y zonas A/B |
-| src/game.js | Reglas puras: movimiento, límites, distancias, obstáculos y meta |
-| tests/game.test.js | Pruebas de movimiento diagonal, límites, colisiones y meta |
+| src/App.jsx | Canvas, controles Drei, estado de interfaz, inventario, salas visitadas, pausa y victoria |
+| src/labyrinth.js | Cuatro mapas deterministas, búsqueda de rutas, movimiento, colisiones, llaves, puertas y reglas de simulación |
+| src/components/Jugador.jsx | Llama original, useKeyboardControls y actualización por cuadro con useFrame |
+| src/components/Obstaculo.jsx | Guardianes reutilizables que patrullan rutas de suelo sin atravesar paredes |
+| src/components/Laberinto.jsx | Suelo, muros, cámara 3D adaptable, puertas, llaves, altar y trampas animadas |
+| src/components/Marcador.jsx | Contador de muertes, tiempo, progreso de llaves y acciones |
+| tests/game.test.js | Conectividad, movimiento, guardianes, puertas, inventario, trampas, victoria y recorrido integral |
 
-### Explicación para la defensa
+Fiber dibuja la escena con Canvas y permite actualizarla con useFrame. Drei interpreta el teclado con KeyboardControls y useKeyboardControls. Three proporciona las geometrías, luces, materiales y texturas locales de los letreros.
 
-Fiber crea la escena mediante `Canvas`; `useFrame` ejecuta la simulación y mueve los objetos en cada cuadro. Drei proporciona `KeyboardControls` y `useKeyboardControls`, que convierten WASD/flechas en acciones con nombres. Three aporta el motor gráfico y una textura de texto local para marcar A/B. No se descargan modelos, tipografías ni texturas externas.
+La simulación usa subpasos de hasta 1/120 s y limita el tiempo acumulado en un cuadro largo. La posición se comprueba contra los muros en ambos ejes, permitiendo deslizarse por ellos sin atravesarlos. Las colisiones con guardianes usan distancia entre radios; las trampas solo dañan durante la fase activa. La misma función stepSimulation se usa en el juego y en las pruebas.
 
-El movimiento multiplica la velocidad por el tiempo transcurrido. Se normalizan las diagonales para que no sean más rápidas. Cada cuadro se divide en pasos de hasta 1/120 de segundo: se avanza el reloj, se mueve al jugador y se comprueba la distancia a cada roca en el plano XZ. Si la distancia es menor que la suma de los radios, ocurre un choque. El inicio está separado de las rocas para evitar muertes repetidas al reaparecer.
+Los laberintos usan semillas fijas para reproducir los trazados. Se generan caminos conectados y después se añaden pequeñas cámaras y algunos bucles. La búsqueda BFS comprueba rutas y define patrullas. Las llaves se ubican lejos de la entrada por distancia de recorrido, no solo por distancia en línea recta.
 
-React guarda los datos visibles con useState. Las posiciones y el reloj de simulación se conservan en useRef para no reconstruir toda la interfaz en cada cuadro. La interfaz se actualiza aproximadamente cada 80 ms; los eventos de choque y victoria se muestran inmediatamente.
+La prueba integral recorre entradas, llaves, puertas y altar usando movimiento real de la simulación; desactiva el daño para verificar únicamente que la geometría y la progresión no bloquean la partida. Las muertes y trampas se verifican por separado. La prueba en navegador verifica además renderizado 3D, teclado, transición de sala, pausa y presentación móvil.
 
-## Trabajo de equipo y Git
+## Trabajo de equipo y entrega
 
-El repositorio tiene una rama `main` y los avances de esta implementación se publican en `boris-avances`. Esto no representa el historial ni las contribuciones de varios integrantes. No se crean PR automáticamente.
+La guía original exige ramas feature/jugador, feature/obstaculos y feature/marcador, commits reales por integrante y un Pull Request revisado por otra persona. Cada integrante debe trabajar y explicar su contribución; no se deben simular autores ni revisiones. Esta actualización local no crea una entrega ni publica cambios en GitHub.
 
-La guía pide ramas `feature/jugador`, `feature/obstaculos` y `feature/marcador`, varios commits reales por integrante y al menos un Pull Request revisado por otra persona. Cada integrante debe implementar o mejorar su parte, probarla, guardar commits claros y abrir su PR. Reparto sugerido:
+Guion sugerido para el video de 2–3 minutos:
 
-- Jugador: controles, cámara, apariencia y pruebas de movimiento.
-- Obstáculos: velocidades, dificultad y pruebas de choques.
-- Marcador: interfaz, zonas A/B, victoria y pruebas de reinicio.
+1. Presentar integrantes, objetivo y controles.
+2. Mostrar a la llama, un laberinto, un choque y el aumento del contador, una llave y una puerta. Mostrar también la victoria tras regresar con las tres llaves.
+3. Enseñar Canvas/useFrame de Fiber y KeyboardControls/useKeyboardControls de Drei.
+4. Explicar brevemente muros, patrullas y trampas temporizadas.
+5. Mostrar ramas, commits y PR reales. Cada integrante explica su parte.
 
-Con dos integrantes, una persona puede asumir dos ramas. No inventen autores, commits ni revisiones para simular participación.
-
-Ejemplo, después de integrar la base y actualizar main:
-
-```sh
-git switch main
-git pull
-git switch -c feature/jugador
-# Realizar y probar una mejora real.
-git add src/components/Jugador.jsx
-git commit -m "Mejora el movimiento del jugador"
-git push -u origin feature/jugador
-# Abrir un Pull Request hacia main y pedir revisión al compañero.
-```
-
-## Guion de defensa (2 a 3 minutos)
-
-1. 0:00-0:25: presentar integrantes, objetivo y controles.
-2. 0:25-1:05: mostrar movimiento, un choque, incremento de muertes, regreso a A y victoria.
-3. 1:05-1:45: explicar Canvas/useFrame (Fiber), KeyboardControls/useKeyboardControls (Drei), distancia de colisión y contador.
-4. 1:45-2:20: mostrar ramas, commits reales de cada integrante y al menos un Pull Request.
-5. 2:20-2:45: cada integrante explica su contribución y una dificultad resuelta.
-
-Todos deben aparecer o hablar. La entrega académica requiere el enlace al repositorio y el enlace al video en la plataforma indicada por el docente. La grabación, la revisión entre compañeros y la entrega quedan a cargo del equipo.
+La entrega académica sigue requiriendo el enlace del repositorio y el del video.
