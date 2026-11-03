@@ -25,3 +25,15 @@ test('la victoria exige llegar a la zona B, no basta con avanzar por el borde', 
   assert.equal(progressAt(START), 0)
   assert.equal(progressAt(GOAL), 100)
 })
+
+import { WALLS, wallHeight, wallWarning } from '../src/game.js'
+test('las paredes aparecen y desaparecen, y siempre queda un paso lateral', () => {
+  for (const w of WALLS) {
+    assert.equal(wallHeight(w, 0 - w.phase), 0)
+    assert.ok(wallHeight(w, 2 - w.phase) > 1)
+    assert.equal(wallWarning(w, 1 - w.phase), true)
+    assert.equal(hasCollision({ x: w.x, z: w.z }, 2 - w.phase), true)
+    assert.equal(hasCollision({ x: w.x, z: w.z }, 2 - w.phase, 2), false)
+    assert.equal(hasCollision({ x: w.x > 0 ? -5.1 : 5.1, z: w.z }, 2 - w.phase), false)
+  }
+})

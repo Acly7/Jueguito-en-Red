@@ -1,7 +1,8 @@
 import { useMemo, useEffect } from 'react'
 import { CanvasTexture } from 'three'
 import { useThree } from '@react-three/fiber'
-import { OBSTACLES } from '../game'
+import { OBSTACLES, WALLS } from '../game'
+import ParedEmergente from './ParedEmergente'
 import Jugador from './Jugador'
 import Obstaculo from './Obstaculo'
 function Zona({ z, color, letter, label }) {
@@ -38,6 +39,7 @@ export default function Escenario(props) {
       <mesh position={[0, 0.015, config.z]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[11.6, 0.07]} /><meshBasicMaterial color="#d59163" transparent opacity={0.45} /></mesh>
       <Obstaculo config={config} simulation={props.simulation} />
     </group>)}
+    {WALLS.map(config => <ParedEmergente key={config.id} config={config} simulation={props.simulation} />)}
     {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[0, 0.02, 8 - i * 2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[0.06, 0.6]} /><meshBasicMaterial color="#90aaa0" transparent opacity={0.35} /></mesh>)}
     <Zona z={10} color="#39e6bd" letter="A" label="INICIO" /><Zona z={-10} color="#ffd477" letter="B" label="META" />
     {[-1.7, 1.7].map(x => <mesh key={x} position={[x, 1.2, -10]} castShadow><boxGeometry args={[0.15, 2.4, 0.15]} /><meshStandardMaterial color="#ffd477" /></mesh>)}

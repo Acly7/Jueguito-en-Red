@@ -6,6 +6,7 @@ import { START, movePlayer, hasCollision, reachedGoal, progressAt } from '../gam
 
 export default function Jugador({ simulation, status, onDeath, onWin, onUpdate, touch }) {
   const model = useRef()
+  const jumpHeld = useRef(false)
   const [, getKeys] = useKeyboardControls()
   useFrame((_, frameDelta) => {
     const sim = simulation.current
@@ -13,13 +14,18 @@ export default function Jugador({ simulation, status, onDeath, onWin, onUpdate, 
       // Subpasos para no atravesar obstáculos cuando baja la tasa de cuadros.
       let remaining = Math.min(frameDelta, 0.1)
       const keys = getKeys()
-      const input = Object.fromEntries(['forward', 'backward', 'left', 'right'].map(key => [key, Boolean(keys[key] || touch.current[key])]))
+      const input = Object.fromEntries(['forward', 'backward', 'left', 'right', 'jump'].map(key => [key, Boolean(keys[key] || touch.current[key])]))
+      const startJump = input.jump && !jumpHeld.current
+      jumpHeld.current = input.jump
       while (remaining > 0) {
         const delta = Math.min(remaining, 1 / 120)
         remaining -= delta
         sim.time += delta
+        if (startJump && sim.jumpY <= 0 && sim.jumpV <= 0) sim.jumpV = 8
+        sim.jumpY = Math.max(0, sim.jumpY + sim.jumpV * delta)
+        sim.jumpV = sim.jumpY === 0 ? 0 : sim.jumpV - 13 * delta
         sim.position = movePlayer(sim.position, input, delta)
-        if (hasCollision(sim.position, sim.time)) { sim.position = { ...START }; onDeath(); break }
+        if (hasCollision(sim.position, sim.time, sim.jumpY)) { sim.position = { ...START }; sim.jumpY = 0; sim.jumpV = 0; onDeath(); break }
         if (reachedGoal(sim.position)) { onWin(sim.time); break }
       }
       if (sim.time - sim.lastUpdate > 0.08) { sim.lastUpdate = sim.time; onUpdate(sim.time, reachedGoal(sim.position) ? 100 : progressAt(sim.position)) }
@@ -27,7 +33,7 @@ export default function Jugador({ simulation, status, onDeath, onWin, onUpdate, 
       const dz = Number(input.backward) - Number(input.forward)
       if (dx || dz) model.current.rotation.y = Math.atan2(-dx, -dz)
     }
-    model.current.position.set(sim.position.x, 0.72, sim.position.z)
+    model.current.position.set(sim.position.x, 0.72 + sim.jumpY, sim.position.z)
   }, -2)
   return <group ref={model} position={[0, 0.72, 10]}>
     <mesh castShadow><boxGeometry args={[0.64, 0.7, 0.9]} /><meshStandardMaterial color="#fff0cd" /></mesh>
